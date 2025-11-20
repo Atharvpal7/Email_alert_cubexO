@@ -1,0 +1,31 @@
+version: "3.9"
+
+services:
+  airflow:
+    build: .
+    container_name: airflow-demo
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: sqlite:////opt/airflow/airflow.db
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "false"
+      AIRFLOW__WEBSERVER__DEFAULT_UI_TIMEZONE: UTC
+      PIPELINE_DB_PATH: /opt/airflow/data/pipeline.db
+      PIPELINE_ALERT_EMAIL: help@theeditor.gmail.com
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-no-reply@example.com}
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./src:/opt/airflow/src
+      - ./configs:/opt/airflow/configs
+      - ./logs:/opt/airflow/logs
+      - pipeline_db:/opt/airflow/data
+    command: bash -c "airflow db init && airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com || true && airflow webserver --port 8080 & airflow scheduler"
+
+volumes:
+  pipeline_db:
